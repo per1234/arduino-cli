@@ -53,3 +53,5 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace go.bug.st/serial => github.com/tobiaskohlbau/go-serial v1.1.2-0.20210207073241-4d1a3d2b006a

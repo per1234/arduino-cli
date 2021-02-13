@@ -256,6 +256,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
+github.com/tobiaskohlbau/go-serial v1.1.2-0.20210207073241-4d1a3d2b006a h1:8SKGLBcYfwQUfQhNjcAPUWJ5NjBIGxTKu8U6Jq4GoYE=
+github.com/tobiaskohlbau/go-serial v1.1.2-0.20210207073241-4d1a3d2b006a/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
@@ -269,8 +271,6 @@ go.bug.st/downloader/v2 v2.1.1 h1:nyqbUizo3E2IxCCm4YFac4FtSqqFpqWP+Aae5GCMuw4=
 go.bug.st/downloader/v2 v2.1.1/go.mod h1:VZW2V1iGKV8rJL2ZEGIDzzBeKowYv34AedJz13RzVII=
 go.bug.st/relaxed-semver v0.0.0-20190922224835-391e10178d18 h1:F1qxtaFuewctYc/SsHRn+Q7Dtwi+yJGPgVq8YLtQz98=
 go.bug.st/relaxed-semver v0.0.0-20190922224835-391e10178d18/go.mod h1:Cx1VqMtEhE9pIkEyUj3LVVVPkv89dgW8aCKrRPDR/uE=
-go.bug.st/serial v1.1.1 h1:5J1DpaIaSIruBi7jVnKXnhRS+YQ9+2PLJMtIZKoIgnc=
-go.bug.st/serial v1.1.1/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
 go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45 h1:mACY1anK6HNCZtm/DK2Rf2ZPHggVqeB0+7rY9Gl6wyI=
 go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45/go.mod h1:dRSl/CVCTf56CkXgJMDOdSwNfo2g1orOGE/gBGdvjZw=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
