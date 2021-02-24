@@ -67,7 +67,7 @@ tasks:
 
     vars:
       PLATFORM_DIR: "{{ .PROJECT_NAME }}_windows_amd64"
-      BUILD_COMMAND: "go build -o {{ .DIST_DIR }}/{{ .PLATFORM_DIR }}/{{ .PROJECT_NAME }}.exe {{ .LDFLAGS }}"
+      BUILD_COMMAND: "go build -buildmode=exe -o {{ .DIST_DIR }}/{{ .PLATFORM_DIR }}/{{ .PROJECT_NAME }}.exe {{ .LDFLAGS }}"
       BUILD_PLATFORM: "windows/amd64"
       CONTAINER_TAG: "{{ .GO_VERSION }}-main"
       PACKAGE_PLATFORM: "Windows_64bit"
