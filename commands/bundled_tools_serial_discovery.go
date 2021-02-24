@@ -188,7 +188,7 @@ func ListBoards(pm *packagemanager.PackageManager) ([]*BoardPort, error) {
 		} else {
 			finalError = err
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(100 * time.Second):
 		finalError = fmt.Errorf("decoding LIST command: timeout")
 	}
 
