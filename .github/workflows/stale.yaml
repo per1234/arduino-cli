@@ -37,6 +37,10 @@ jobs:
             let elapsed = elapsedDays * 24 * 60 * 60 * 1000;
             let now = new Date().getTime();
             for (const issue of issues) {
+              // If an issue was active in the past 15 days, leave it alone.
+              if (now - new Date(issue.updated_at).getTime() < elapsed) {
+                continue;
+              }
 
               // If we're here, we've been waiting for feedback for more than
               // 15 days, mark as stale.
