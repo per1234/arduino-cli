@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Mark stale
-        if: github.event_name == 'schedule'
         uses: actions/github-script@v3
         with:
           github-token: ${{github.token}}
@@ -81,7 +80,6 @@ jobs:
             }
 
       - name: Close stale
-        if: github.event_name == 'schedule'
         uses: actions/github-script@v3
         with:
           github-token: ${{github.token}}
