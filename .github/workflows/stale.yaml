@@ -1,5 +1,5 @@
 name: stale-bot
-
+#
 on:
   push:
   schedule:
