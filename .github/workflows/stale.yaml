@@ -23,7 +23,7 @@ jobs:
         with:
           github-token: ${{github.token}}
           script: |
-            // Get a list of all open issues labeled `waiting for feedback`
+            // Get a list of all open issues labeled as waiting for feedback
             const opts = github.issues.listForRepo.endpoint.merge({
               ...context.repo,
               state: 'open',
