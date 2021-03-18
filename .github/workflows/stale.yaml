@@ -33,7 +33,7 @@ jobs:
             const issues = await github.paginate(opts);
 
             // Set this value to whatever makes sense for the repo.
-            let elapsedDays = 30
+            let elapsedDays = 0
 
             let elapsed = elapsedDays * 24 * 60 * 60 * 1000;
             let now = new Date().getTime();
