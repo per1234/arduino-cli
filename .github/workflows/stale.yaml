@@ -1,6 +1,7 @@
 name: stale-bot
 
 on:
+  push:
   schedule:
     # run every day at midnight
     - cron: "0 0 * * *"
