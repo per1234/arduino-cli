@@ -1,6 +1,7 @@
 name: nightly
 
 on:
+  push:
   schedule:
     # run every day at 1AM
     - cron: "0 1 * * *"
@@ -9,7 +10,7 @@ jobs:
   create-nightly-artifacts:
     # This workflow is only of value to the arduino/arduino-cli repository and
     # would always fail in forks
-    if: github.repository == 'arduino/arduino-cli'
+    #if: github.repository == 'arduino/arduino-cli'
     runs-on: ubuntu-latest
 
     steps:
@@ -71,6 +72,7 @@ jobs:
         env:
           AC_USERNAME: ${{ secrets.AC_USERNAME }}
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+          AC_PROVIDER: 9M5NQMNWBJ
         run: |
           gon gon.config.hcl
 
@@ -107,26 +109,26 @@ jobs:
           # to ensure compatibility with v1
           path: dist
 
-      - name: upload
-        uses: docker://plugins/s3
-        env:
-          PLUGIN_SOURCE: "dist/*"
-          PLUGIN_TARGET: "/arduino-cli/nightly"
-          PLUGIN_STRIP_PREFIX: "dist/"
-          PLUGIN_BUCKET: ${{ secrets.DOWNLOADS_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Report failure
-        if: failure()
-        uses: masci/datadog@v1
-        with:
-          api-key: ${{ secrets.DD_API_KEY }}
-          events: |
-            - title: "Arduino CLI nighly build failed"
-              text: "Nightly build worfklow has failed"
-              alert_type: "error"
-              host: ${{ github.repository }}
-              tags:
-                - "project:arduino-cli"
-                - "workflow:${{ github.workflow }}"
+#       - name: upload
+#         uses: docker://plugins/s3
+#         env:
+#           PLUGIN_SOURCE: "dist/*"
+#           PLUGIN_TARGET: "/arduino-cli/nightly"
+#           PLUGIN_STRIP_PREFIX: "dist/"
+#           PLUGIN_BUCKET: ${{ secrets.DOWNLOADS_BUCKET }}
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#
+#       - name: Report failure
+#         if: failure()
+#         uses: masci/datadog@v1
+#         with:
+#           api-key: ${{ secrets.DD_API_KEY }}
+#           events: |
+#             - title: "Arduino CLI nighly build failed"
+#               text: "Nightly build worfklow has failed"
+#               alert_type: "error"
+#               host: ${{ github.repository }}
+#               tags:
+#                 - "project:arduino-cli"
+#                 - "workflow:${{ github.workflow }}"
