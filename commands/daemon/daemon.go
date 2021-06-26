@@ -226,7 +226,7 @@ func (s *ArduinoCoreServerImpl) Compile(req *rpc.CompileRequest, stream rpc.Ardu
 		utils.FeedStreamTo(func(data []byte) { stream.Send(&rpc.CompileResponse{ErrStream: data}) }),
 		false) // Set debug to false
 	if err != nil {
-		return err
+		return err.Err()
 	}
 	return stream.Send(resp)
 }
@@ -239,7 +239,7 @@ func (s *ArduinoCoreServerImpl) PlatformInstall(req *rpc.PlatformInstallRequest,
 		func(p *rpc.TaskProgress) { stream.Send(&rpc.PlatformInstallResponse{TaskProgress: p}) },
 	)
 	if err != nil {
-		return err
+		return err.Err()
 	}
 	return stream.Send(resp)
 }
@@ -251,7 +251,7 @@ func (s *ArduinoCoreServerImpl) PlatformDownload(req *rpc.PlatformDownloadReques
 		func(p *rpc.DownloadProgress) { stream.Send(&rpc.PlatformDownloadResponse{Progress: p}) },
 	)
 	if err != nil {
-		return err
+		return err.Err()
 	}
 	return stream.Send(resp)
 }
@@ -263,7 +263,7 @@ func (s *ArduinoCoreServerImpl) PlatformUninstall(req *rpc.PlatformUninstallRequ
 		func(p *rpc.TaskProgress) { stream.Send(&rpc.PlatformUninstallResponse{TaskProgress: p}) },
 	)
 	if err != nil {
-		return err
+		return err.Err()
 	}
 	return stream.Send(resp)
 }
@@ -276,21 +276,26 @@ func (s *ArduinoCoreServerImpl) PlatformUpgrade(req *rpc.PlatformUpgradeRequest,
 		func(p *rpc.TaskProgress) { stream.Send(&rpc.PlatformUpgradeResponse{TaskProgress: p}) },
 	)
 	if err != nil {
-		return err
+		return err.Err()
 	}
 	return stream.Send(resp)
 }
 
 // PlatformSearch FIXMEDOC
 func (s *ArduinoCoreServerImpl) PlatformSearch(ctx context.Context, req *rpc.PlatformSearchRequest) (*rpc.PlatformSearchResponse, error) {
-	return core.PlatformSearch(req)
+	resp, err := core.PlatformSearch(req)
+	if err != nil {
+		return nil, err.Err()
+	}
+
+	return resp, nil
 }
 
 // PlatformList FIXMEDOC
 func (s *ArduinoCoreServerImpl) PlatformList(ctx context.Context, req *rpc.PlatformListRequest) (*rpc.PlatformListResponse, error) {
 	platforms, err := core.GetPlatforms(req)
 	if err != nil {
-		return nil, err
+		return nil, err.Err()
 	}
 	return &rpc.PlatformListResponse{InstalledPlatforms: platforms}, nil
 }

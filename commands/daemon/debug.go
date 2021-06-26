@@ -69,6 +69,9 @@ func (s *DebugService) Debug(stream dbg.DebugService_DebugServer) error {
 }
 
 // GetDebugConfig return metadata about a debug session
-func (s *DebugService) GetDebugConfig(ctx context.Context, req *dbg.DebugConfigRequest) (*dbg.GetDebugConfigResponse, error) {
+func (s *DebugService) GetDebugConfig(ctx context.Context, req *dbg.DebugConfigRequest) (*dbg.GetDebugConfigResponse, *status.Status) {
+	resp, err:=cmd.GetDebugConfig(ctx, req)
+	if err != nil{
+		return nil, status.New(codes.InvalidArgument,
 	return cmd.GetDebugConfig(ctx, req)
 }

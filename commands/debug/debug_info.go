@@ -17,7 +17,6 @@ package debug
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/arduino/arduino-cli/arduino/cores"
@@ -34,22 +33,22 @@ import (
 )
 
 // GetDebugConfig returns metadata to start debugging with the specified board
-func GetDebugConfig(ctx context.Context, req *debug.DebugConfigRequest) (*debug.GetDebugConfigResponse, error) {
+func GetDebugConfig(ctx context.Context, req *debug.DebugConfigRequest) (*debug.GetDebugConfigResponse, *status.Status) {
 	pm := commands.GetPackageManager(req.GetInstance().GetId())
 
 	return getDebugProperties(req, pm)
 }
 
-func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.PackageManager) (*debug.GetDebugConfigResponse, error) {
+func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.PackageManager) (*debug.GetDebugConfigResponse, *status.Status) {
 	// TODO: make a generic function to extract sketch from request
 	// and remove duplication in commands/compile.go
 	if req.GetSketchPath() == "" {
-		return nil, fmt.Errorf("missing sketchPath")
+		return nil, status.New(codes.InvalidArgument, "missing sketchPath")
 	}
 	sketchPath := paths.New(req.GetSketchPath())
 	sketch, err := sketches.NewSketchFromPath(sketchPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "opening sketch")
+		return nil, status.New(codes.PermissionDenied, errors.Wrap(err, "opening sketch").Error())
 	}
 
 	// XXX Remove this code duplication!!
@@ -58,17 +57,17 @@ func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.Packag
 		fqbnIn = sketch.Metadata.CPU.Fqbn
 	}
 	if fqbnIn == "" {
-		return nil, fmt.Errorf("no Fully Qualified Board Name provided")
+		return nil, status.New(codes.InvalidArgument, "no Fully Qualified Board Name provided")
 	}
 	fqbn, err := cores.ParseFQBN(fqbnIn)
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing FQBN")
+		return nil, status.New(codes.InvalidArgument, errors.Wrap(err, "error parsing FQBN").Error())
 	}
 
 	// Find target board and board properties
 	_, platformRelease, board, boardProperties, referencedPlatformRelease, err := pm.ResolveFQBN(fqbn)
 	if err != nil {
-		return nil, errors.Wrap(err, "error resolving FQBN")
+		return nil, status.New(codes.InvalidArgument, errors.Wrap(err, "error resolving FQBN").Error())
 	}
 
 	// Build configuration for debug
@@ -111,7 +110,7 @@ func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.Packag
 		} else if refP, ok := referencedPlatformRelease.Programmers[req.GetProgrammer()]; ok {
 			toolProperties.Merge(refP.Properties)
 		} else {
-			return nil, fmt.Errorf("programmer '%s' not found", req.GetProgrammer())
+			return nil, status.Newf(codes.InvalidArgument, "programmer '%s' not found", req.GetProgrammer())
 		}
 	}
 
@@ -122,14 +121,14 @@ func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.Packag
 		// TODO: Create a function to obtain importPath from sketch
 		importPath, err = sketch.BuildPath()
 		if err != nil {
-			return nil, fmt.Errorf("can't find build path for sketch: %v", err)
+			return nil, status.Newf(codes.Internal, "can't find build path for sketch: %v", err)
 		}
 	}
 	if !importPath.Exist() {
-		return nil, fmt.Errorf("compiled sketch not found in %s", importPath)
+		return nil, status.Newf(codes.InvalidArgument, "compiled sketch not found in %s", importPath)
 	}
 	if !importPath.IsDir() {
-		return nil, fmt.Errorf("expected compiled sketch in directory %s, but is a file instead", importPath)
+		return nil, status.Newf(codes.InvalidArgument, "expected compiled sketch in directory %s, but is a file instead", importPath)
 	}
 	toolProperties.SetPath("build.path", importPath)
 	toolProperties.Set("build.project_name", sketch.Name+".ino")
@@ -152,7 +151,7 @@ func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.Packag
 	}
 
 	if !debugProperties.ContainsKey("executable") {
-		return nil, status.Error(codes.Unimplemented, fmt.Sprintf("debugging not supported for board %s", req.GetFqbn()))
+		return nil, status.Newf(codes.Unimplemented, "debugging not supported for board %s", req.GetFqbn())
 	}
 
 	server := debugProperties.Get("server")
