@@ -31,6 +31,8 @@ import (
 	"github.com/arduino/go-paths-helper"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Debug command launches a debug tool for a sketch.
@@ -39,13 +41,13 @@ import (
 // grpc Out <- tool stdOut
 // grpc Out <- tool stdErr
 // It also implements tool process lifecycle management
-func Debug(ctx context.Context, req *dbg.DebugConfigRequest, inStream io.Reader, out io.Writer, interrupt <-chan os.Signal) (*dbg.DebugResponse, error) {
+func Debug(ctx context.Context, req *dbg.DebugConfigRequest, inStream io.Reader, out io.Writer, interrupt <-chan os.Signal) (*dbg.DebugResponse, *status.Status) {
 
 	// Get debugging command line to run debugger
 	pm := commands.GetPackageManager(req.GetInstance().GetId())
-	commandLine, err := getCommandLine(req, pm)
-	if err != nil {
-		return nil, errors.Wrap(err, "Cannot get command line for tool")
+	commandLine, stat := getCommandLine(req, pm)
+	if stat != nil {
+		return nil, status.Newf(stat.Code(), "Cannot get command line for tool: %s", stat.Message())
 	}
 
 	for i, arg := range commandLine {
@@ -61,7 +63,7 @@ func Debug(ctx context.Context, req *dbg.DebugConfigRequest, inStream io.Reader,
 
 	cmd, err := executils.NewProcess(commandLine...)
 	if err != nil {
-		return nil, errors.Wrap(err, "Cannot execute debug tool")
+		return nil, status.New(codes.FailedPrecondition, errors.Wrap(err, "Cannot execute debug tool").Error())
 	}
 
 	// Get stdIn pipe from tool
@@ -109,7 +111,7 @@ func Debug(ctx context.Context, req *dbg.DebugConfigRequest, inStream io.Reader,
 }
 
 // getCommandLine compose a debug command represented by a core recipe
-func getCommandLine(req *dbg.DebugConfigRequest, pm *packagemanager.PackageManager) ([]string, error) {
+func getCommandLine(req *dbg.DebugConfigRequest, pm *packagemanager.PackageManager) ([]string, *status.Status) {
 	debugInfo, err := getDebugProperties(req, pm)
 	if err != nil {
 		return nil, err
@@ -128,7 +130,7 @@ func getCommandLine(req *dbg.DebugConfigRequest, pm *packagemanager.PackageManag
 		}
 		gdbPath = paths.New(debugInfo.ToolchainPath).Join(gdbexecutable)
 	default:
-		return nil, errors.Errorf("unsupported toolchain '%s'", debugInfo.GetToolchain())
+		return nil, status.Newf(codes.FailedPrecondition, "unsupported toolchain '%s'", debugInfo.GetToolchain())
 	}
 	add(gdbPath.String())
 
@@ -167,7 +169,7 @@ func getCommandLine(req *dbg.DebugConfigRequest, pm *packagemanager.PackageManag
 		add(serverCmd)
 
 	default:
-		return nil, errors.Errorf("unsupported gdb server '%s'", debugInfo.GetServer())
+		return nil, status.Newf(codes.FailedPrecondition, "unsupported gdb server '%s'", debugInfo.GetServer())
 	}
 
 	// Add executable
