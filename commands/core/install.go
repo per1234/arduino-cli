@@ -66,7 +66,7 @@ func PlatformInstall(ctx context.Context, req *rpc.PlatformInstallRequest,
 func installPlatform(pm *packagemanager.PackageManager,
 	platformRelease *cores.PlatformRelease, requiredTools []*cores.ToolRelease,
 	downloadCB commands.DownloadProgressCB, taskCB commands.TaskProgressCB,
-	skipPostInstall bool) error {
+	skipPostInstall bool) *status.Status {
 	log := pm.Log.WithField("platform", platformRelease)
 
 	// Prerequisite checks before install

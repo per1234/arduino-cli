@@ -17,8 +17,6 @@ package core
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/arduino/arduino-cli/arduino/cores/packagemanager"
 	"github.com/arduino/arduino-cli/commands"
@@ -30,7 +28,7 @@ import (
 var (
 	// ErrAlreadyLatest is returned when an upgrade is not possible because
 	// already at latest version.
-	ErrAlreadyLatest = errors.New("platform already at latest version")
+	ErrAlreadyLatest = status.New(codes.InvalidArgument, "platform already at latest version")
 )
 
 // PlatformUpgrade FIXMEDOC
@@ -48,7 +46,7 @@ func PlatformUpgrade(ctx context.Context, req *rpc.PlatformUpgradeRequest,
 		PlatformArchitecture: req.Architecture,
 	}
 	if err := upgradePlatform(pm, ref, downloadCB, taskCB, req.GetSkipPostInstall()); err != nil {
-		return nil, status.New(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	status := commands.Init(&rpc.InitRequest{Instance: req.Instance}, nil)
@@ -61,19 +59,19 @@ func PlatformUpgrade(ctx context.Context, req *rpc.PlatformUpgradeRequest,
 
 func upgradePlatform(pm *packagemanager.PackageManager, platformRef *packagemanager.PlatformReference,
 	downloadCB commands.DownloadProgressCB, taskCB commands.TaskProgressCB,
-	skipPostInstall bool) error {
+	skipPostInstall bool) *status.Status {
 	if platformRef.PlatformVersion != nil {
-		return fmt.Errorf("upgrade doesn't accept parameters with version")
+		return status.Newf(codes.InvalidArgument, "upgrade doesn't accept parameters with version")
 	}
 
 	// Search the latest version for all specified platforms
 	platform := pm.FindPlatform(platformRef)
 	if platform == nil {
-		return fmt.Errorf("platform %s not found", platformRef)
+		return status.Newf(codes.InvalidArgument, "platform %s not found", platformRef)
 	}
 	installed := pm.GetInstalledPlatformRelease(platform)
 	if installed == nil {
-		return fmt.Errorf("platform %s is not installed", platformRef)
+		return status.Newf(codes.InvalidArgument, "platform %s is not installed", platformRef)
 	}
 	latest := platform.GetLatestRelease()
 	if !latest.Version.GreaterThan(installed.Version) {
@@ -83,7 +81,7 @@ func upgradePlatform(pm *packagemanager.PackageManager, platformRef *packagemana
 
 	platformRelease, tools, err := pm.FindPlatformReleaseDependencies(platformRef)
 	if err != nil {
-		return fmt.Errorf("platform %s is not installed", platformRef)
+		return status.Newf(codes.InvalidArgument, "platform %s is not installed", platformRef)
 	}
 	err = installPlatform(pm, platformRelease, tools, downloadCB, taskCB, skipPostInstall)
 	if err != nil {

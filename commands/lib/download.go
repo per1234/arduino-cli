@@ -17,17 +17,18 @@ package lib
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/arduino/arduino-cli/arduino/libraries/librariesindex"
 	"github.com/arduino/arduino-cli/arduino/libraries/librariesmanager"
 	"github.com/arduino/arduino-cli/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // LibraryDownload FIXMEDOC
-func LibraryDownload(ctx context.Context, req *rpc.LibraryDownloadRequest, downloadCB commands.DownloadProgressCB) (*rpc.LibraryDownloadResponse, error) {
+func LibraryDownload(ctx context.Context, req *rpc.LibraryDownloadRequest, downloadCB commands.DownloadProgressCB) (*rpc.LibraryDownloadResponse, *status.Status) {
 	logrus.Info("Executing `arduino lib download`")
 
 	lm := commands.GetLibraryManager(req.GetInstance().GetId())
@@ -36,7 +37,7 @@ func LibraryDownload(ctx context.Context, req *rpc.LibraryDownloadRequest, downl
 
 	lib, err := findLibraryIndexRelease(lm, req)
 	if err != nil {
-		return nil, fmt.Errorf("looking for library: %s", err)
+		return nil, status.Newf(codes.InvalidArgument, "looking for library: %s", err)
 	}
 
 	if err := downloadLibrary(lm, lib, downloadCB, func(*rpc.TaskProgress) {}); err != nil {
@@ -47,17 +48,17 @@ func LibraryDownload(ctx context.Context, req *rpc.LibraryDownloadRequest, downl
 }
 
 func downloadLibrary(lm *librariesmanager.LibrariesManager, libRelease *librariesindex.Release,
-	downloadCB commands.DownloadProgressCB, taskCB commands.TaskProgressCB) error {
+	downloadCB commands.DownloadProgressCB, taskCB commands.TaskProgressCB) *status.Status {
 
 	taskCB(&rpc.TaskProgress{Name: "Downloading " + libRelease.String()})
 	config, err := commands.GetDownloaderConfig()
 	if err != nil {
-		return err
+		return status.New(codes.InvalidArgument, err.Error())
 	}
 	if d, err := libRelease.Resource.Download(lm.DownloadsDir, config); err != nil {
-		return err
+		return status.New(codes.Unavailable, err.Error())
 	} else if err := commands.Download(d, libRelease.String(), downloadCB); err != nil {
-		return err
+		return status.New(codes.Unavailable, err.Error())
 	}
 	taskCB(&rpc.TaskProgress{Completed: true})
 
