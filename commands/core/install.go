@@ -50,9 +50,8 @@ func PlatformInstall(ctx context.Context, req *rpc.PlatformInstallRequest,
 		return nil, status.Newf(codes.InvalidArgument, "finding platform dependencies: %s", err)
 	}
 
-	err = installPlatform(pm, platform, tools, downloadCB, taskCB, req.GetSkipPostInstall())
-	if err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+	if err := installPlatform(pm, platform, tools, downloadCB, taskCB, req.GetSkipPostInstall()); err != nil {
+		return nil, err
 	}
 
 	status := commands.Init(&rpc.InitRequest{Instance: req.Instance}, nil)
@@ -102,7 +101,7 @@ func installPlatform(pm *packagemanager.PackageManager,
 	for _, tool := range toolsToInstall {
 		err := commands.InstallToolRelease(pm, tool, taskCB)
 		if err != nil {
-			return err
+			return status.New(codes.FailedPrecondition, err.Error())
 		}
 	}
 
@@ -128,7 +127,7 @@ func installPlatform(pm *packagemanager.PackageManager,
 		var err error
 		_, installedTools, err = pm.FindPlatformReleaseDependencies(platformRef)
 		if err != nil {
-			return fmt.Errorf("can't find dependencies for platform %s: %w", platformRef, err)
+			return status.Newf(codes.InvalidArgument, "can't find dependencies for platform %s: %w", platformRef, err)
 		}
 	}
 

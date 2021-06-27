@@ -17,7 +17,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/arduino/arduino-cli/arduino/cores"
 	"github.com/arduino/arduino-cli/arduino/cores/packagemanager"
@@ -48,9 +47,8 @@ func PlatformDownload(ctx context.Context, req *rpc.PlatformDownloadRequest, dow
 		return nil, status.Newf(codes.InvalidArgument, "find platform dependencies: %s", err)
 	}
 
-	err = downloadPlatform(pm, platform, downloadCB)
-	if err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+	if err := downloadPlatform(pm, platform, downloadCB); err != nil {
+		return nil, err
 	}
 
 	for _, tool := range tools {
@@ -63,24 +61,32 @@ func PlatformDownload(ctx context.Context, req *rpc.PlatformDownloadRequest, dow
 	return &rpc.PlatformDownloadResponse{}, nil
 }
 
-func downloadPlatform(pm *packagemanager.PackageManager, platformRelease *cores.PlatformRelease, downloadCB commands.DownloadProgressCB) error {
+func downloadPlatform(pm *packagemanager.PackageManager, platformRelease *cores.PlatformRelease, downloadCB commands.DownloadProgressCB) *status.Status {
 	// Download platform
 	config, err := commands.GetDownloaderConfig()
 	if err != nil {
-		return err
+		return status.New(codes.FailedPrecondition, err.Error())
 	}
 	resp, err := pm.DownloadPlatformRelease(platformRelease, config)
 	if err != nil {
-		return err
+		return status.New(codes.Unavailable, err.Error())
 	}
-	return commands.Download(resp, platformRelease.String(), downloadCB)
+	if err := commands.Download(resp, platformRelease.String(), downloadCB); err != nil {
+		return status.New(codes.Unavailable, err.Error())
+	}
+
+	return nil
 }
 
-func downloadTool(pm *packagemanager.PackageManager, tool *cores.ToolRelease, downloadCB commands.DownloadProgressCB) error {
+func downloadTool(pm *packagemanager.PackageManager, tool *cores.ToolRelease, downloadCB commands.DownloadProgressCB) *status.Status {
 	// Check if tool has a flavor available for the current OS
 	if tool.GetCompatibleFlavour() == nil {
-		return fmt.Errorf("tool %s not available for the current OS", tool)
+		return status.Newf(codes.FailedPrecondition, "tool %s not available for the current OS", tool)
 	}
 
-	return commands.DownloadToolRelease(pm, tool, downloadCB)
+	if err := commands.DownloadToolRelease(pm, tool, downloadCB); err != nil {
+		return status.New(codes.Unavailable, err.Error())
+	}
+
+	return nil
 }
