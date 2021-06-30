@@ -41,7 +41,7 @@ func LibraryDownload(ctx context.Context, req *rpc.LibraryDownloadRequest, downl
 	}
 
 	if err := downloadLibrary(lm, lib, downloadCB, func(*rpc.TaskProgress) {}); err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+		return nil, status.Convert(err)
 	}
 
 	return &rpc.LibraryDownloadResponse{}, nil

@@ -39,7 +39,7 @@ func GetDebugConfig(ctx context.Context, req *debug.DebugConfigRequest) (*debug.
 
 	resp, err := getDebugProperties(req, pm)
 	if err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+		return nil, status.Convert(err)
 	}
 
 	return resp, nil

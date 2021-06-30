@@ -38,7 +38,7 @@ func LibrarySearch(ctx context.Context, req *rpc.LibrarySearchRequest) (*rpc.Lib
 
 	resp, err := searchLibrary(req, lm)
 	if err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+		return nil, status.Convert(err)
 	}
 
 	return resp, nil

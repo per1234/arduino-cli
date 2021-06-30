@@ -19,7 +19,6 @@ import (
 	"github.com/arduino/arduino-cli/arduino/libraries/librariesmanager"
 	"github.com/arduino/arduino-cli/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -30,7 +29,7 @@ func LibraryUpgradeAll(instanceID int32, downloadCB commands.DownloadProgressCB,
 	lm := commands.GetLibraryManager(instanceID)
 
 	if err := upgrade(lm, listLibraries(lm, true, true), downloadCB, taskCB); err != nil {
-		return status.New(codes.Unknown, err.Error())
+		return status.Convert(err)
 	}
 
 	stat := commands.Init(&rpc.InitRequest{Instance: &rpc.Instance{Id: instanceID}}, nil)
@@ -53,7 +52,7 @@ func LibraryUpgrade(instanceID int32, libraryNames []string, downloadCB commands
 	// do it
 	err := upgrade(lm, libs, downloadCB, taskCB)
 	if err != nil {
-		return status.New(codes.Unknown, err.Error())
+		return status.Convert(err)
 	}
 
 	return nil

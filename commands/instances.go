@@ -700,7 +700,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 			// Downloads latest library release
 			taskCB(&rpc.TaskProgress{Name: "Downloading " + available.String()})
 			if d, err := available.Resource.Download(lm.DownloadsDir, downloaderConfig); err != nil {
-				return status.New(codes.Unknown, err.Error())
+				return status.Convert(err)
 			} else if err := Download(d, available.String(), downloadCB); err != nil {
 				return status.New(codes.Unavailable, err.Error())
 			}
@@ -720,7 +720,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 			}
 
 			if err := lm.Install(available, libPath); err != nil {
-				return status.New(codes.Unknown, err.Error())
+				return status.Convert(err)
 			}
 
 			taskCB(&rpc.TaskProgress{Message: "Installed " + available.String(), Completed: true})
@@ -748,7 +748,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 				// Get list of installed tools needed by the currently installed version
 				_, installedTools, err := pm.FindPlatformReleaseDependencies(ref)
 				if err != nil {
-					return status.New(codes.Unknown, err.Error())
+					return status.Convert(err)
 				}
 
 				ref = &packagemanager.PlatformReference{
@@ -777,13 +777,13 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 				for _, tool := range toolsToInstall {
 					if err := DownloadToolRelease(pm, tool, downloadCB); err != nil {
 						taskCB(&rpc.TaskProgress{Message: "Error downloading tool " + tool.String()})
-						return status.New(codes.Unknown, err.Error())
+						return status.Convert(err)
 					}
 				}
 
 				// Downloads platform
 				if d, err := pm.DownloadPlatformRelease(latest, downloaderConfig); err != nil {
-					return status.New(codes.Unknown, err.Error())
+					return status.Convert(err)
 				} else if err := Download(d, latest.String(), downloadCB); err != nil {
 					return status.New(codes.Unavailable, err.Error())
 				}
@@ -795,7 +795,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 				for _, tool := range toolsToInstall {
 					if err := InstallToolRelease(pm, tool, taskCB); err != nil {
 						taskCB(&rpc.TaskProgress{Message: "Error installing tool " + tool.String()})
-						return status.New(codes.Unknown, err.Error())
+						return status.Convert(err)
 					}
 				}
 
@@ -804,7 +804,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 				if err != nil {
 					logrus.WithError(err).Error("Cannot install platform")
 					taskCB(&rpc.TaskProgress{Message: "Error installing " + latest.String()})
-					return status.New(codes.Unknown, err.Error())
+					return status.Convert(err)
 				}
 
 				// Uninstall previously installed release
@@ -819,7 +819,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 					if err := pm.UninstallPlatform(latest); err != nil {
 						logrus.WithError(err).Error("Error rolling-back changes.")
 						taskCB(&rpc.TaskProgress{Message: "Error rolling-back changes: " + err.Error()})
-						return status.New(codes.Unknown, err.Error())
+						return status.Convert(err)
 					}
 				}
 
@@ -833,7 +833,7 @@ func Upgrade(ctx context.Context, req *rpc.UpgradeRequest, downloadCB DownloadPr
 
 						if err := pm.UninstallTool(toolRelease); err != nil {
 							log.WithError(err).Error("Error uninstalling")
-							return status.New(codes.Unknown, err.Error())
+							return status.Convert(err)
 						}
 
 						log.Info("Tool uninstalled")

@@ -52,7 +52,7 @@ func PlatformInstall(ctx context.Context, req *rpc.PlatformInstallRequest,
 
 	err = installPlatform(pm, platform, tools, downloadCB, taskCB, req.GetSkipPostInstall())
 	if err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+		return nil, status.Convert(err)
 	}
 
 	status := commands.Init(&rpc.InitRequest{Instance: req.Instance}, nil)

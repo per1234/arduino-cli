@@ -48,7 +48,7 @@ func PlatformUpgrade(ctx context.Context, req *rpc.PlatformUpgradeRequest,
 		PlatformArchitecture: req.Architecture,
 	}
 	if err := upgradePlatform(pm, ref, downloadCB, taskCB, req.GetSkipPostInstall()); err != nil {
-		return nil, status.New(codes.Unknown, err.Error())
+		return nil, status.Convert(err)
 	}
 
 	status := commands.Init(&rpc.InitRequest{Instance: req.Instance}, nil)
