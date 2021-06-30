@@ -74,6 +74,5 @@ func (s *DebugService) GetDebugConfig(ctx context.Context, req *dbg.DebugConfigR
 	if err != nil {
 		return nil, err.Err()
 	}
-
 	return resp, nil
 }

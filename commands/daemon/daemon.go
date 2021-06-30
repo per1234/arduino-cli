@@ -431,7 +431,6 @@ func (s *ArduinoCoreServerImpl) LibraryList(ctx context.Context, req *rpc.Librar
 	if err != nil {
 		return nil, err.Err()
 	}
-
 	return resp, nil
 }
 
