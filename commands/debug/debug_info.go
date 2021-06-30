@@ -34,10 +34,15 @@ import (
 )
 
 // GetDebugConfig returns metadata to start debugging with the specified board
-func GetDebugConfig(ctx context.Context, req *debug.DebugConfigRequest) (*debug.GetDebugConfigResponse, error) {
+func GetDebugConfig(ctx context.Context, req *debug.DebugConfigRequest) (*debug.GetDebugConfigResponse, *status.Status) {
 	pm := commands.GetPackageManager(req.GetInstance().GetId())
 
-	return getDebugProperties(req, pm)
+	resp, err := getDebugProperties(req, pm)
+	if err != nil {
+		return nil, status.New(codes.Unknown, err.Error())
+	}
+
+	return resp, nil
 }
 
 func getDebugProperties(req *debug.DebugConfigRequest, pm *packagemanager.PackageManager) (*debug.GetDebugConfigResponse, error) {

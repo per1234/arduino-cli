@@ -16,26 +16,26 @@
 package lib
 
 import (
-	"fmt"
-
 	"github.com/arduino/arduino-cli/arduino/libraries/librariesmanager"
 	"github.com/arduino/arduino-cli/commands"
 	rpc "github.com/arduino/arduino-cli/rpc/cc/arduino/cli/commands/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // LibraryUpgradeAll upgrades all the available libraries
 func LibraryUpgradeAll(instanceID int32, downloadCB commands.DownloadProgressCB,
-	taskCB commands.TaskProgressCB) error {
+	taskCB commands.TaskProgressCB) *status.Status {
 	// get the library manager
 	lm := commands.GetLibraryManager(instanceID)
 
 	if err := upgrade(lm, listLibraries(lm, true, true), downloadCB, taskCB); err != nil {
-		return err
+		return status.New(codes.Unknown, err.Error())
 	}
 
-	status := commands.Init(&rpc.InitRequest{Instance: &rpc.Instance{Id: instanceID}}, nil)
-	if status != nil {
-		return fmt.Errorf("rescanning libraries: %s", status.Err())
+	stat := commands.Init(&rpc.InitRequest{Instance: &rpc.Instance{Id: instanceID}}, nil)
+	if stat != nil {
+		return status.Newf(stat.Code(), "rescanning libraries: %s", stat.Err())
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func LibraryUpgradeAll(instanceID int32, downloadCB commands.DownloadProgressCB,
 
 // LibraryUpgrade upgrades only the given libraries
 func LibraryUpgrade(instanceID int32, libraryNames []string, downloadCB commands.DownloadProgressCB,
-	taskCB commands.TaskProgressCB) error {
+	taskCB commands.TaskProgressCB) *status.Status {
 	// get the library manager
 	lm := commands.GetLibraryManager(instanceID)
 
@@ -51,7 +51,12 @@ func LibraryUpgrade(instanceID int32, libraryNames []string, downloadCB commands
 	libs := filterByName(listLibraries(lm, true, true), libraryNames)
 
 	// do it
-	return upgrade(lm, libs, downloadCB, taskCB)
+	err := upgrade(lm, libs, downloadCB, taskCB)
+	if err != nil {
+		return status.New(codes.Unknown, err.Error())
+	}
+
+	return nil
 }
 
 func upgrade(lm *librariesmanager.LibrariesManager, libs []*installedLib, downloadCB commands.DownloadProgressCB,
