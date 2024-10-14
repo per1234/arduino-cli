@@ -141,7 +141,7 @@ jobs:
           bundle_id = "cc.arduino.arduino-cli"
 
           sign {
-            application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
+            application_identity = "Developer ID Application: Per Tillisch (9M5NQMNWBJ)"
           }
 
           # Ask Gon for zip output to force notarization process to take place.
@@ -180,63 +180,63 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}-${{ matrix.build.artifact-suffix }}
           path: ${{ env.DIST_DIR }}/${{ env.PACKAGE_FILENAME }}
 
-  create-windows-installer:
-    runs-on: windows-sign-pc
-    needs: create-release-artifacts
-
-    defaults:
-      run:
-        shell: bash
-
-    env:
-      INSTALLER_CERT_WINDOWS_CER: "/tmp/cert.cer"
-      # We are hardcoding the path for signtool because is not present on the windows PATH env var by default.
-      # Keep in mind that this path could change when upgrading to a new runner version
-      SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x86/signtool.exe"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: ${{ env.ARTIFACT_NAME }}-*
-          merge-multiple: true
-          path: ${{ env.DIST_DIR }}
-
-      - name: Prepare PATH
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Build MSI
-        id: buildmsi
-        run: |
-          TAG=${{ needs.create-release-artifacts.outputs.version }}
-          WIX_TAG="${TAG%%-*}" # removes "-rc*" since wix is not happy with it, this only affects RCs builds (error CNDL0108)
-          PACKAGE_FILENAME="${{ env.PROJECT_NAME }}_${TAG}_Windows_64bit"
-          SOURCE_DIR="${GITHUB_WORKSPACE}/${{ env.DIST_DIR }}/${{ env.PROJECT_NAME }}_windows_amd64/"
-          MSBuild.exe ./installer/cli.wixproj -p:SourceDir="$SOURCE_DIR" -p:OutputPath="${GITHUB_WORKSPACE}/${{ env.DIST_DIR }}" -p:OutputName="$PACKAGE_FILENAME" -p:ProductVersion="$WIX_TAG"
-
-      - name: Save Win signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_CER }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_CER}}
-
-      - name: Sign MSI
-        env:
-          MSI_FILE: ${{ steps.buildmsi.outputs.msi }} # this comes from .installer/cli.wixproj
-          CERT_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
-          CONTAINER_NAME: ${{ secrets.INSTALLER_CERT_WINDOWS_CONTAINER }}
-          # https://stackoverflow.com/questions/17927895/automate-extended-validation-ev-code-signing-with-safenet-etoken
-        run: |
-          "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino CLI" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "${{ env.MSI_FILE }}"
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        env:
-          MSI_FILE: ${{ steps.buildmsi.outputs.msi }}
-        with:
-          if-no-files-found: error
-          name: ${{ env.ARTIFACT_NAME }}-windows-installer
-          path: ${{ env.MSI_FILE }}
+#   create-windows-installer:
+#     runs-on: windows-sign-pc
+#     needs: create-release-artifacts
+#
+#     defaults:
+#       run:
+#         shell: bash
+#
+#     env:
+#       INSTALLER_CERT_WINDOWS_CER: "/tmp/cert.cer"
+#       # We are hardcoding the path for signtool because is not present on the windows PATH env var by default.
+#       # Keep in mind that this path could change when upgrading to a new runner version
+#       SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x86/signtool.exe"
+#
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#
+#       - name: Download artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           pattern: ${{ env.ARTIFACT_NAME }}-*
+#           merge-multiple: true
+#           path: ${{ env.DIST_DIR }}
+#
+#       - name: Prepare PATH
+#         uses: microsoft/setup-msbuild@v2
+#
+#       - name: Build MSI
+#         id: buildmsi
+#         run: |
+#           TAG=${{ needs.create-release-artifacts.outputs.version }}
+#           WIX_TAG="${TAG%%-*}" # removes "-rc*" since wix is not happy with it, this only affects RCs builds (error CNDL0108)
+#           PACKAGE_FILENAME="${{ env.PROJECT_NAME }}_${TAG}_Windows_64bit"
+#           SOURCE_DIR="${GITHUB_WORKSPACE}/${{ env.DIST_DIR }}/${{ env.PROJECT_NAME }}_windows_amd64/"
+#           MSBuild.exe ./installer/cli.wixproj -p:SourceDir="$SOURCE_DIR" -p:OutputPath="${GITHUB_WORKSPACE}/${{ env.DIST_DIR }}" -p:OutputName="$PACKAGE_FILENAME" -p:ProductVersion="$WIX_TAG"
+#
+#       - name: Save Win signing certificate to file
+#         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_CER }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_CER}}
+#
+#       - name: Sign MSI
+#         env:
+#           MSI_FILE: ${{ steps.buildmsi.outputs.msi }} # this comes from .installer/cli.wixproj
+#           CERT_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
+#           CONTAINER_NAME: ${{ secrets.INSTALLER_CERT_WINDOWS_CONTAINER }}
+#           # https://stackoverflow.com/questions/17927895/automate-extended-validation-ev-code-signing-with-safenet-etoken
+#         run: |
+#           "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino CLI" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "${{ env.MSI_FILE }}"
+#
+#       - name: Upload artifacts
+#         uses: actions/upload-artifact@v4
+#         env:
+#           MSI_FILE: ${{ steps.buildmsi.outputs.msi }}
+#         with:
+#           if-no-files-found: error
+#           name: ${{ env.ARTIFACT_NAME }}-windows-installer
+#           path: ${{ env.MSI_FILE }}
 
   create-release:
     runs-on: ubuntu-latest
@@ -244,7 +244,7 @@ jobs:
     needs:
       - create-release-artifacts
       - notarize-macos
-      - create-windows-installer
+      # - create-windows-installer
     permissions:
       contents: write
       id-token: write # This is required for requesting the JWT
@@ -298,12 +298,12 @@ jobs:
           # (all the files we need are in the DIST_DIR root)
           artifacts: ${{ env.DIST_DIR }}/*
 
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: "github_${{ env.PROJECT_NAME }}"
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Upload release files on Arduino downloads servers
-        run: aws s3 sync ${{ env.DIST_DIR }} s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.AWS_PLUGIN_TARGET }}
+#       - name: configure aws credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+#           role-session-name: "github_${{ env.PROJECT_NAME }}"
+#           aws-region: ${{ env.AWS_REGION }}
+#
+#       - name: Upload release files on Arduino downloads servers
+#         run: aws s3 sync ${{ env.DIST_DIR }} s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.AWS_PLUGIN_TARGET }}
